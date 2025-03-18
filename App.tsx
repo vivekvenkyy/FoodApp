@@ -9,6 +9,7 @@ import PaymentScreen from "./src/screens/PaymentScreen";
 import ConfirmationScreen from "./src/screens/ConfirmationScreen";
 import { CartProvider } from "./src/context/CartContext";
 import PaymentCompletionScreen from "./src/screens/PaymentCompletionScreen";
+import AuthScreen from "./src/screens/AuthScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ export default function App() {
     <CartProvider>
       <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Auth" component={AuthScreen} />
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
             <Stack.Screen name="Cart" component={CartScreen} />
