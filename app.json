@@ -23,6 +23,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Allow Foodie to access your camera for scanning barcodes"
+        }
+      ]
+    ]
   }
 }

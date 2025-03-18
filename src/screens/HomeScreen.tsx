@@ -73,7 +73,8 @@ const restaurantData = [
       ],
     },
   ];
-    
+  
+  
 const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
