@@ -1,82 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Button } from "react-native";
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
 const PaymentScreen = ({ route, navigation }) => {
-  const { total } = route.params;
-  const [hasPermission, setHasPermission] = useState(null);
-  const [scannerVisible, setScannerVisible] = useState(false);
-  const [scanned, setScanned] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
-
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    setScannerVisible(false);
-    alert(`Payment QR code scanned! Data: ${data}`);
-    // In a real app, you would process the payment using the QR data here
-    navigation.navigate("Confirmation");
-  };
+  // Add a default value of 0 if total is undefined
+  const { total = 0 } = route.params || {};
 
   const handlePayment = () => {
     alert(`Payment of ₹${total} processed successfully!`);
-    navigation.navigate("Confirmation");
+    navigation.navigate("PaymentsComp", { total });
   };
-
-  const openScanner = () => {
-    setScanned(false);
-    setScannerVisible(true);
-  };
-
-  if (hasPermission === null) {
-    return <Text style={styles.permissionText}>Requesting camera permission...</Text>;
-  }
-  if (hasPermission === false) {
-    return <Text style={styles.permissionText}>No access to camera. Please grant permission in your settings.</Text>;
-  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Amount Payable: ₹{total}</Text>
       
-      <TouchableOpacity style={styles.scanButton} onPress={openScanner}>
-        <Text style={styles.buttonText}>Scan QR Code</Text>
-      </TouchableOpacity>
-
+      {/* QR Code from local image */}
+      <View style={styles.qrContainer}>
+        <Text style={styles.qrText}>Scan to pay</Text>
+        <Image 
+          source={require('../../qr-payment.jpg')} 
+          style={styles.qrImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.qrCaption}>
+          Scan this QR code with your payment app
+        </Text>
+      </View>
+      
       <Text style={styles.orText}>OR</Text>
 
       <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
-        <Text style={styles.buttonText}>Confirm Payment</Text>
+        <Text style={styles.payText}>Confirm Payment</Text>
       </TouchableOpacity>
-
-      <Modal
-        visible={scannerVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setScannerVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.scannerContainer}>
-            <BarCodeScanner
-              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-              style={styles.scanner}
-            />
-            <View style={styles.overlay}>
-              <View style={styles.scanFrame} />
-            </View>
-            <Button 
-              title="Cancel" 
-              onPress={() => setScannerVisible(false)} 
-              color="#FF6347"
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -91,26 +46,36 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 24, 
     fontWeight: "bold", 
-    marginBottom: 30 
+    marginBottom: 20 
   },
-  payButton: { 
-    backgroundColor: "#4CAF50", 
-    padding: 15, 
-    borderRadius: 8,
+  qrContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: "white",
+    borderRadius: 10,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  qrText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+    color: "#555"
+  },
+  qrImage: {
     width: 200,
-    alignItems: "center"
+    height: 200,
+    marginVertical: 10,
   },
-  scanButton: {
-    backgroundColor: "#2196F3",
-    padding: 15,
-    borderRadius: 8,
-    width: 200,
-    alignItems: "center"
-  },
-  buttonText: { 
-    color: "white", 
-    fontWeight: "bold", 
-    fontSize: 18 
+  qrCaption: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 10,
   },
   orText: {
     margin: 20,
@@ -118,42 +83,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#666"
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)"
+  payButton: { 
+    backgroundColor: "#4CAF50", 
+    padding: 15, 
+    paddingHorizontal: 40,
+    borderRadius: 8 
   },
-  scannerContainer: {
-    height: "80%",
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 10,
-    overflow: "hidden"
+  payText: { 
+    color: "white", 
+    fontWeight: "bold", 
+    fontSize: 18 
   },
-  scanner: {
-    flex: 1
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  scanFrame: {
-    width: 200,
-    height: 200,
-    borderWidth: 2,
-    borderColor: "#2196F3",
-    backgroundColor: "transparent"
-  },
-  permissionText: {
-    fontSize: 18,
-    textAlign: "center",
-    margin: 30
-  }
 });
 
 export default PaymentScreen;

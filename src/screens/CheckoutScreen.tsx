@@ -30,7 +30,8 @@ const CheckoutScreen = ({ route, navigation }) => {
         // In CheckoutScreen.js
         onPress={() => {
           console.log("Navigating to Payment screen with total:", getTotalPrice());
-          navigation.navigate("PaymentsComp");
+          // navigation.navigate("PaymentsComp");
+          navigation.navigate("Payment")
         }}       
         // onPress={() => navigation.navigate("Payment")}
         >

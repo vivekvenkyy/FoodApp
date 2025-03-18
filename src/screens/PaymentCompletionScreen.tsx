@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Linking } from "react-native";
+import QRCodeStyled from 'react-native-qrcode-styled';
 
 const PaymentCompletionScreen = ({ route, navigation }) => {
   const { total } = route.params || { total: 0 };
@@ -10,6 +11,15 @@ const PaymentCompletionScreen = ({ route, navigation }) => {
   
   // Generate a random order ID
   const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  // Payment QR code data - links to the Rick Roll video (same as example)
+  const receiptQRValue = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+  const openQRLink = () => {
+    Linking.openURL(receiptQRValue).catch((err) => 
+      console.error('An error occurred', err)
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -40,6 +50,23 @@ const PaymentCompletionScreen = ({ route, navigation }) => {
               <Text style={styles.receiptLabel}>Status:</Text>
               <Text style={[styles.receiptValue, styles.statusText]}>Paid</Text>
             </View>
+          </View>
+
+          {/* QR Code Display */}
+          <View style={styles.qrContainer}>
+            <Text style={styles.qrText}>Scan to view receipt</Text>
+            <QRCodeStyled
+              data={receiptQRValue}
+              style={{backgroundColor: 'white'}}
+              padding={15}
+              pieceSize={6}
+              pieceScale={0.8}
+              pieceBorderRadius={2}
+              color="#000000"
+            />
+            <TouchableOpacity onPress={openQRLink} style={styles.linkButton}>
+              <Text style={styles.linkText}>View receipt online</Text>
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.deliveryInfo}>
@@ -138,6 +165,29 @@ const styles = StyleSheet.create({
   statusText: {
     color: "#28a745",
     fontWeight: "bold",
+  },
+  qrContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    width: "100%",
+  },
+  qrText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 12,
+    color: "#555"
+  },
+  linkButton: {
+    marginTop: 12,
+    padding: 6,
+  },
+  linkText: {
+    color: "#2196F3",
+    textDecorationLine: "underline",
+    fontSize: 14
   },
   deliveryInfo: {
     fontSize: 14,
