@@ -21,6 +21,7 @@ const AuthScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(''); // Added phone number state
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +37,7 @@ const AuthScreen = ({ navigation }) => {
         return false;
       }
     } else {
-      if (!email || !username || !password || !confirmPassword) {
+      if (!email || !username || !password || !confirmPassword || !phoneNumber) {
         Alert.alert('Error', 'Please fill all fields');
         return false;
       }
@@ -45,6 +46,13 @@ const AuthScreen = ({ navigation }) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         Alert.alert('Error', 'Please enter a valid email address');
+        return false;
+      }
+      
+      // Phone number validation
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(phoneNumber)) {
+        Alert.alert('Error', 'Please enter a valid 10-digit phone number');
         return false;
       }
       
@@ -73,7 +81,7 @@ const AuthScreen = ({ navigation }) => {
       const endpoint = isLogin ? LOGIN_ENDPOINT : SIGNUP_ENDPOINT;
       const body = isLogin 
         ? JSON.stringify({ email, password }) 
-        : JSON.stringify({ email, username, password });
+        : JSON.stringify({ email, username, password, phoneNumber }); // Added phone number
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -120,6 +128,7 @@ const AuthScreen = ({ navigation }) => {
     // Clear fields when switching modes
     setPassword('');
     setConfirmPassword('');
+    setPhoneNumber('');
   };
   
   return (
@@ -162,6 +171,17 @@ const AuthScreen = ({ navigation }) => {
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
+            />
+          )}
+          
+          {!isLogin && (
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              maxLength={10}
             />
           )}
           
