@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
 const PaymentScreen = ({ route, navigation }) => {
   // Add a default value of 0 if total is undefined
-  const { total = 0 } = route.params || {};
+  const { total = 670 } = route.params || {};
 
   const handlePayment = () => {
     alert(`Payment of ₹${total} processed successfully!`);
