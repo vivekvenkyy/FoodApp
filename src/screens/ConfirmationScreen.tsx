@@ -12,6 +12,7 @@ const ConfirmationScreen = ({ navigation }) => {
     latitude: 19.0510, // Starting location (near Chembur)
     longitude: 72.8930,
   });
+  //const mapUrl = `https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=${deliveryLat},${deliveryLng}`;
 
   useEffect(() => {
     const interval = setInterval(() => {
