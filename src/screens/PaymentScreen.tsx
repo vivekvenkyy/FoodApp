@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { CartContext } from "../context/CartContext";
 
 const PaymentScreen = ({ route, navigation }) => {
   // Add a default value of 0 if total is undefined
   const { total = 670 } = route.params || {};
+  const {getTotalPrice} = useContext(CartContext);
+  const totalAmount = getTotalPrice();
 
   const handlePayment = () => {
-    alert(`Payment of ₹${total} processed successfully!`);
-    navigation.navigate("PaymentsComp", { total });
+    alert(`Payment of ₹${getTotalPrice()} processed successfully!`);
+    navigation.navigate("PaymentsComp", { totalAmount});
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Amount Payable: ₹{total}</Text>
+      <Text style={styles.title}>Amount Payable: ₹{totalAmount}</Text>
       
       {/* QR Code from local image */}
       <View style={styles.qrContainer}>
