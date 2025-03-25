@@ -11,16 +11,33 @@ import {
   Alert,
   Image,
   ScrollView,
-  StatusBar
+  StatusBar,
+  Switch
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
+import Slider from '@react-native-community/slider';
+import * as ImagePicker from 'expo-image-picker';
 
-// Dummy profile images (replace this logic with any local images you'd like to use)
-const dummyImages = [
-  require('../assets/avatar1.jpg'),
-  require('../assets/avatar2.jpg'),
-  require('../assets/avatar3.jpg'),
-];
+// Custom Checkbox Component
+const CheckBox = ({ value, onValueChange, label }) => {
+  return (
+    <TouchableOpacity 
+      style={styles.checkboxContainer} 
+      onPress={() => onValueChange(!value)}
+    >
+      <View 
+        style={[
+          styles.checkbox, 
+          value ? styles.checkboxSelected : styles.checkboxUnselected
+        ]}
+      >
+        {value && <Text style={styles.checkboxCheckmark}>✓</Text>}
+      </View>
+      <Text style={styles.checkboxLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const AuthScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -30,11 +47,46 @@ const AuthScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null); // Added state for profile photo
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  const API_BASE_URL = 'http://192.168.131.57:9080';
+  // New state variables for additional input controls
+  const [dietPreferences, setDietPreferences] = useState([
+    { label: 'Vegetarian', checked: false },
+    { label: 'Vegan', checked: false },
+    { label: 'Gluten-Free', checked: false },
+  ]);
+  
+  const [cuisineInterests, setCuisineInterests] = useState('');
+  const [cookingSkillLevel, setCookingSkillLevel] = useState(5);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [allergyAlert, setAllergyAlert] = useState(false);
+
+  const API_BASE_URL = 'http://192.168.164.112:9080';
   const LOGIN_ENDPOINT = `${API_BASE_URL}/api/users/email`;
   const SIGNUP_ENDPOINT = `${API_BASE_URL}/api/users`;
+
+  // New function to handle image picking
+  const pickImage = async () => {
+    // Request permission to access gallery
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    // Launch image picker
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1], // Square aspect ratio
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      // The image is saved locally and we store its URI
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
 
   const validateForm = () => {
     if (isLogin) {
@@ -74,18 +126,28 @@ const AuthScreen = ({ navigation }) => {
         Alert.alert('Error', 'Please select a profile picture');
         return false;
       }
+
+      // Additional validation for new fields during signup
+      if (!cuisineInterests) {
+        Alert.alert('Error', 'Please select a cuisine preference');
+        return false;
+      }
     }
     return true;
   };
 
+  const toggleDietPreference = (index) => {
+    const updatedPreferences = [...dietPreferences];
+    updatedPreferences[index].checked = !updatedPreferences[index].checked;
+    setDietPreferences(updatedPreferences);
+  };
+
   const handleAuth = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
-
     try {
       if (isLogin) {
-        // For login, fetch the user data by email first
+        // Login logic remains the same
         const loginUrl = `${LOGIN_ENDPOINT}?email=${encodeURIComponent(email)}`;
         
         const response = await fetch(loginUrl, {
@@ -101,14 +163,11 @@ const AuthScreen = ({ navigation }) => {
           throw new Error(userData.message || 'User not found');
         }
 
-        // Compare the password from form with the password from API response
         if (userData.password !== password) {
           throw new Error('Invalid password');
         }
 
-        // If password matches, store user data
         if (userData) {
-          // Create a token (in a real app, the backend would provide this)
           const dummyToken = `token_${Date.now()}`;
           await AsyncStorage.setItem('userToken', dummyToken);
           await AsyncStorage.setItem('userData', JSON.stringify(userData));
@@ -119,7 +178,11 @@ const AuthScreen = ({ navigation }) => {
           });
         }
       } else {
-        // For signup, use the original signup endpoint
+        // Signup logic with new fields
+        const selectedDietPreferences = dietPreferences
+          .filter(pref => pref.checked)
+          .map(pref => pref.label);
+        
         const signupResponse = await fetch(SIGNUP_ENDPOINT, {
           method: 'POST',
           headers: {
@@ -132,6 +195,12 @@ const AuthScreen = ({ navigation }) => {
             contact: phoneNumber,
             role: "user",
             image: selectedImage,
+            // New fields
+            dietPreferences: selectedDietPreferences,
+            cuisineInterests,
+            cookingSkillLevel,
+            notificationsEnabled,
+            allergyAlert
           }),
         });
 
@@ -141,9 +210,7 @@ const AuthScreen = ({ navigation }) => {
           throw new Error(signupData.message || 'Signup failed');
         }
 
-        // If signup successful, store user data
         if (signupData) {
-          // Create a token (in a real app, the backend would provide this)
           const dummyToken = `token_${Date.now()}`;
           await AsyncStorage.setItem('userToken', dummyToken);
           
@@ -154,7 +221,12 @@ const AuthScreen = ({ navigation }) => {
               email,
               name: username,
               contact: phoneNumber,
-              image: selectedImage
+              image: selectedImage,
+              dietPreferences: selectedDietPreferences,
+              cuisineInterests,
+              cookingSkillLevel,
+              notificationsEnabled,
+              allergyAlert
             }));
           }
           
@@ -180,6 +252,16 @@ const AuthScreen = ({ navigation }) => {
     setConfirmPassword('');
     setPhoneNumber('');
     setSelectedImage(null);
+    // Reset additional fields
+    setCuisineInterests('');
+    setDietPreferences([
+      { label: 'Vegetarian', checked: false },
+      { label: 'Vegan', checked: false },
+      { label: 'Gluten-Free', checked: false },
+    ]);
+    setCookingSkillLevel(5);
+    setNotificationsEnabled(false);
+    setAllergyAlert(false);
   };
 
   return (
@@ -189,6 +271,22 @@ const AuthScreen = ({ navigation }) => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Profile Image Upload Section - Added at the top */}
+        {!isLogin && (
+          <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
+            {selectedImage ? (
+              <Image 
+                source={{ uri: selectedImage }} 
+                style={styles.profileImage} 
+              />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Text style={styles.profileImagePlaceholderText}>Add Profile Photo</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
+
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/starbucks.jpg')}
@@ -233,20 +331,69 @@ const AuthScreen = ({ navigation }) => {
                 maxLength={10}
               />
 
-              {/* Avatar Selector */}
-              <Text style={styles.label}>Select Profile Picture:</Text>
-              <View style={styles.avatarContainer}>
-                {dummyImages.map((img, index) => (
-                  <TouchableOpacity key={index} onPress={() => setSelectedImage(`avatar${index + 1}.png`)}>
-                    <Image
-                      source={img}
-                      style={[
-                        styles.avatar,
-                        selectedImage === `avatar${index + 1}.png` && styles.avatarSelected,
-                      ]}
-                    />
-                  </TouchableOpacity>
+              {/* Cuisine Interests Dropdown */}
+              <Text style={styles.label}>Preferred Cuisine:</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={cuisineInterests}
+                  onValueChange={(itemValue) => setCuisineInterests(itemValue)}
+                >
+                  <Picker.Item label="Select Cuisine" value="" />
+                  <Picker.Item label="Italian" value="italian" />
+                  <Picker.Item label="Chinese" value="chinese" />
+                  <Picker.Item label="Mexican" value="mexican" />
+                  <Picker.Item label="Indian" value="indian" />
+                  <Picker.Item label="Mediterranean" value="mediterranean" />
+                </Picker>
+              </View>
+
+              {/* Diet Preferences Checkboxes */}
+              <Text style={styles.label}>Diet Preferences:</Text>
+              <View style={styles.checkboxRowContainer}>
+                {dietPreferences.map((pref, index) => (
+                  <CheckBox
+                    key={index}
+                    value={pref.checked}
+                    label={pref.label}
+                    onValueChange={() => toggleDietPreference(index)}
+                  />
                 ))}
+              </View>
+
+              {/* Cooking Skill Level Slider */}
+              <Text style={styles.label}>
+                Cooking Skill Level: {cookingSkillLevel}
+              </Text>
+              <Slider
+                minimumValue={1}
+                maximumValue={10}
+                step={1}
+                value={cookingSkillLevel}
+                onValueChange={setCookingSkillLevel}
+                minimumTrackTintColor="#ff6600"
+                maximumTrackTintColor="#ddd"
+              />
+
+              {/* Notifications Toggle */}
+              <View style={styles.switchContainer}>
+                <Text style={styles.label}>Enable Notifications</Text>
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
+                  trackColor={{ false: "#767577", true: "#ff6600" }}
+                  thumbColor={notificationsEnabled ? "#fff" : "#f4f3f4"}
+                />
+              </View>
+
+              {/* Allergy Alert Toggle */}
+              <View style={styles.switchContainer}>
+                <Text style={styles.label}>Allergy Alerts</Text>
+                <Switch
+                  value={allergyAlert}
+                  onValueChange={setAllergyAlert}
+                  trackColor={{ false: "#767577", true: "#ff6600" }}
+                  thumbColor={allergyAlert ? "#fff" : "#f4f3f4"}
+                />
               </View>
             </>
           )}
@@ -300,38 +447,155 @@ const AuthScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  scrollContainer: { flexGrow: 1, padding: 20, justifyContent: 'center' },
-  logoContainer: { alignItems: 'center', marginBottom: 40 },
-  logo: { width: 100, height: 100 },
-  appName: { fontSize: 28, fontWeight: 'bold', color: '#ff6600', marginTop: 10 },
-  headerText: { fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: '#333' },
-  subHeaderText: { fontSize: 16, color: '#666', marginBottom: 30 },
-  formContainer: { width: '100%' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ff6600',
+    marginTop: 10,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subHeaderText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+  },
   input: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderRadius: 10,
-    marginVertical: 10,
-    borderWidth: 1,
+    height: 50,
     borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    backgroundColor: '#fff',
   },
   authButton: {
     backgroundColor: '#ff6600',
-    padding: 15,
+    height: 50,
     borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+  },
+  authButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 15,
   },
-  authButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-  toggleContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 25 },
-  toggleText: { color: '#666', fontSize: 14 },
-  toggleButton: { color: '#ff6600', fontWeight: 'bold', fontSize: 14 },
-  avatarContainer: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 },
-  avatar: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: '#ddd' },
-  avatarSelected: { borderColor: '#ff6600', borderWidth: 3 },
-  label: { marginBottom: 8, color: '#333', fontWeight: 'bold' },
+  toggleText: {
+    color: '#888',
+  },
+  toggleButton: {
+    color: '#ff6600',
+    fontWeight: 'bold',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: 4,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#ff6600',
+    borderColor: '#ff6600',
+  },
+  checkboxUnselected: {
+    borderColor: '#888',
+  },
+  checkboxCheckmark: {
+    color: 'white',
+    fontSize: 16,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+  },
+  checkboxRowContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#333',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  profileImageContainer: {
+    alignSelf: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75, // Make it circular
+    borderWidth: 3,
+    borderColor: '#ff6600',
+  },
+  profileImagePlaceholder: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#e1e1e1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ff6600',
+    borderStyle: 'dashed',
+  },
+  profileImagePlaceholderText: {
+    color: '#888',
+    textAlign: 'center',
+  },
 });
 
 export default AuthScreen;
