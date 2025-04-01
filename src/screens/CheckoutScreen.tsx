@@ -27,14 +27,11 @@ const CheckoutScreen = ({ route, navigation }) => {
 
       <TouchableOpacity
         style={styles.confirmButton}
-        // In CheckoutScreen.js
         onPress={() => {
           console.log("Navigating to Payment screen with total:", getTotalPrice());
-          // navigation.navigate("PaymentsComp");
-          navigation.navigate("Payment")
-        }}       
-        // onPress={() => navigation.navigate("Payment")}
-        >
+          navigation.navigate("Payment", { total: getTotalPrice(), cart }); // Pass total and cart
+        }}
+      >
         <Text style={styles.confirmText}>Proceed to Payment</Text>
       </TouchableOpacity>
     </View>

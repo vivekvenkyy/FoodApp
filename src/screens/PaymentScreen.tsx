@@ -1,102 +1,236 @@
-import React, { useContext } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
-import { CartContext } from "../context/CartContext";
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Alert } from "react-native";
+import QRCodeStyled from 'react-native-qrcode-styled';
 
-const PaymentScreen = ({ route, navigation }) => {
-  // Add a default value of 0 if total is undefined
-  const { total = 670 } = route.params || {};
-  const {getTotalPrice} = useContext(CartContext);
-  const totalAmount = getTotalPrice();
+const PaymentCompletionScreen = ({ route, navigation }) => {
+  const { totalAmount, cart } = route.params || { totalAmount: 0, cart: [] };
+  
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
+  const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  const handlePayment = () => {
-    alert(`Payment of ₹${getTotalPrice()} processed successfully!`);
-    navigation.navigate("PaymentsComp", { totalAmount});
+  const itemsList = cart.map(item => `${item.name}: ₹${item.price} x ${item.quantity}`).join('\n');
+  const receiptQRValue = `Order Receipt
+Order ID: ${orderId}
+Date: ${formattedDate}
+Items:
+${itemsList}
+Total: ₹${totalAmount}
+Status: Paid
+Thank you for your order!`;
+
+  // Show receipt in an alert instead of opening a URL
+  const openQRLink = () => {
+    Alert.alert(
+      "Order Receipt",
+      receiptQRValue,
+      [{ text: "OK", onPress: () => console.log("Receipt viewed") }],
+      { cancelable: true }
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Amount Payable: ₹{totalAmount}</Text>
-      
-      {/* QR Code from local image */}
-      <View style={styles.qrContainer}>
-        <Text style={styles.qrText}>Scan to pay</Text>
-        <Image 
-          source={require('../../qr-payment.jpg')} 
-          style={styles.qrImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.qrCaption}>
-          Scan this QR code with your payment app
-        </Text>
-      </View>
-      
-      <Text style={styles.orText}>OR</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f8f8" />
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <View style={styles.successIconContainer}>
+            <Text style={styles.successIcon}>✓</Text>
+          </View>
+          
+          <Text style={styles.header}>Payment Successful!</Text>
+          <Text style={styles.subheader}>Thank you for your order</Text>
+          
+          <View style={styles.receiptContainer}>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Order ID:</Text>
+              <Text style={styles.receiptValue}>{orderId}</Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Date:</Text>
+              <Text style={styles.receiptValue}>{formattedDate}</Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Amount:</Text>
+              <Text style={styles.receiptValue}>₹{totalAmount}</Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Status:</Text>
+              <Text style={[styles.receiptValue, styles.statusText]}>Paid</Text>
+            </View>
+          </View>
 
-      <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
-        <Text style={styles.payText}>Confirm Payment</Text>
-      </TouchableOpacity>
-    </View>
+          <View style={styles.qrContainer}>
+            <Text style={styles.qrText}>Scan to view receipt</Text>
+            <QRCodeStyled
+              data={receiptQRValue}
+              style={{backgroundColor: 'white'}}
+              padding={15}
+              pieceSize={6}
+              pieceScale={0.8}
+              pieceBorderRadius={2}
+              color="#000000"
+            />
+            <TouchableOpacity onPress={openQRLink} style={styles.linkButton}>
+              <Text style={styles.linkText}>View receipt online</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.deliveryInfo}>
+            Your order has been placed. The restaurant will begin preparing your food shortly.
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.trackButton}
+            onPress={() => navigation.navigate("Confirmation")}
+          >
+            <Text style={styles.trackButtonText}>Track Your Order</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.homeButton}
+            onPress={() => navigation.navigate("Home")}
+          >
+            <Text style={styles.homeButtonText}>Return to Home</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    padding: 16 
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8f8f8",
   },
-  title: { 
-    fontSize: 24, 
-    fontWeight: "bold", 
-    marginBottom: 20 
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f8f8",
+    padding: 16,
+    justifyContent: "center",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  successIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#28a745",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  successIcon: {
+    fontSize: 40,
+    color: "white",
+    fontWeight: "bold",
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  subheader: {
+    fontSize: 16,
+    color: "#777",
+    marginBottom: 25,
+  },
+  receiptContainer: {
+    width: "100%",
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 20,
+  },
+  receiptRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  receiptLabel: {
+    fontSize: 15,
+    color: "#777",
+  },
+  receiptValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+  },
+  statusText: {
+    color: "#28a745",
+    fontWeight: "bold",
   },
   qrContainer: {
     alignItems: "center",
     marginBottom: 20,
-    padding: 16,
-    backgroundColor: "white",
-    borderRadius: 10,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    width: "100%",
   },
   qrText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
-    marginBottom: 10,
+    marginBottom: 12,
     color: "#555"
   },
-  qrImage: {
-    width: 200,
-    height: 200,
-    marginVertical: 10,
+  linkButton: {
+    marginTop: 12,
+    padding: 6,
   },
-  qrCaption: {
+  linkText: {
+    color: "#2196F3",
+    textDecorationLine: "underline",
+    fontSize: 14
+  },
+  deliveryInfo: {
     fontSize: 14,
-    color: "#666",
+    color: "#555",
     textAlign: "center",
-    marginTop: 10,
+    marginBottom: 25,
+    lineHeight: 20,
   },
-  orText: {
-    margin: 20,
+  trackButton: {
+    backgroundColor: "#ff6600",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  trackButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#666"
+    color: "white",
   },
-  payButton: { 
-    backgroundColor: "#4CAF50", 
-    padding: 15, 
-    paddingHorizontal: 40,
-    borderRadius: 8 
+  homeButton: {
+    backgroundColor: "#f8f8f8",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    width: "100%",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
-  payText: { 
-    color: "white", 
-    fontWeight: "bold", 
-    fontSize: 18 
+  homeButtonText: {
+    fontSize: 16,
+    color: "#555",
   },
 });
 
-export default PaymentScreen;
+export default PaymentCompletionScreen;

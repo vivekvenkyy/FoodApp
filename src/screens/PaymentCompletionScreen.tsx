@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Link
 import QRCodeStyled from 'react-native-qrcode-styled';
 
 const PaymentCompletionScreen = ({ route, navigation }) => {
-  const { total } = route.params || { total: 0 };
+  // Get total from PaymentScreen and cart from CheckoutScreen via route params
+  const { totalAmount, cart } = route.params || { totalAmount: 0, cart: [] };
   
   // Get current date and time for receipt
   const currentDate = new Date();
@@ -12,11 +13,20 @@ const PaymentCompletionScreen = ({ route, navigation }) => {
   // Generate a random order ID
   const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  // Payment QR code data - links to the Rick Roll video (same as example)
-  const receiptQRValue = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  // Create detailed receipt string for QR code
+  const itemsList = cart.map(item => `${item.name}: ₹${item.price} x ${item.quantity}`).join('\n');
+  const receiptQRValue = `Order Receipt
+Order ID: ${orderId}
+Date: ${formattedDate}
+Items:
+${itemsList}
+Total: ₹${totalAmount}
+Status: Paid
+Thank you for your order!`;
 
   const openQRLink = () => {
-    Linking.openURL(receiptQRValue).catch((err) => 
+    // This will open the receipt data as plain text
+    Linking.openURL(`data:text/plain,${encodeURIComponent(receiptQRValue)}`).catch((err) => 
       console.error('An error occurred', err)
     );
   };
@@ -44,7 +54,7 @@ const PaymentCompletionScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.receiptRow}>
               <Text style={styles.receiptLabel}>Amount:</Text>
-              <Text style={styles.receiptValue}>₹{total}</Text>
+              <Text style={styles.receiptValue}>₹{totalAmount}</Text>
             </View>
             <View style={styles.receiptRow}>
               <Text style={styles.receiptLabel}>Status:</Text>
