@@ -84,7 +84,7 @@ const restaurantData = [
 const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [lastShake, setLastShake] = useState(0); // Debounce shake events
+  const [lastTilt, setLastTilt] = useState(0); // Debounce tilt events
 
   const filteredRestaurants = restaurantData.filter(
     (item) =>
@@ -92,37 +92,37 @@ const HomeScreen = ({ navigation }) => {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle shake detection
+  // Handle tilt detection
   useEffect(() => {
-    Accelerometer.setUpdateInterval(100); // Update every 100ms
+    Accelerometer.setUpdateInterval(200); // Update every 200ms for smoother tilt
     const subscription = Accelerometer.addListener((accelerometerData) => {
-      const { x } = accelerometerData; // x-axis for left/right motion
+      const { x } = accelerometerData; // x-axis for left/right tilt
       const now = Date.now();
 
-      // Detect shake or significant tilt (adjust threshold as needed)
-      const SHAKE_THRESHOLD = 1.5; // Acceleration threshold for shake
-      const TIME_THRESHOLD = 500; // Minimum time between shakes (ms)
+      // Tilt thresholds (adjust as needed)
+      const TILT_THRESHOLD = 0.3; // Lower threshold for tilt detection
+      const TIME_THRESHOLD = 1000; // 1-second cooldown between category changes
 
-      if (Math.abs(x) > SHAKE_THRESHOLD && now - lastShake > TIME_THRESHOLD) {
-        setLastShake(now);
+      if (Math.abs(x) > TILT_THRESHOLD && now - lastTilt > TIME_THRESHOLD) {
+        setLastTilt(now);
         const currentIndex = categories.findIndex((cat) => cat.name === selectedCategory);
 
-        if (x > 0) {
-          // Right shake/tilt
+        if (x > TILT_THRESHOLD) {
+          // Tilt right
           const nextIndex = Math.min(currentIndex + 1, categories.length - 1);
           setSelectedCategory(categories[nextIndex].name);
-          console.log("Shake Right: Selected", categories[nextIndex].name);
-        } else {
-          // Left shake/tilt
+          console.log("Tilt Right: Selected", categories[nextIndex].name);
+        } else if (x < -TILT_THRESHOLD) {
+          // Tilt left
           const prevIndex = Math.max(currentIndex - 1, 0);
           setSelectedCategory(categories[prevIndex].name);
-          console.log("Shake Left: Selected", categories[prevIndex].name);
+          console.log("Tilt Left: Selected", categories[prevIndex].name);
         }
       }
     });
 
     return () => subscription.remove(); // Cleanup on unmount
-  }, [selectedCategory, lastShake]);
+  }, [selectedCategory, lastTilt]);
 
   const handleLogout = async () => {
     try {
