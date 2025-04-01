@@ -61,7 +61,7 @@ const AuthScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [allergyAlert, setAllergyAlert] = useState(false);
 
-  const API_BASE_URL = 'http://192.168.164.112:9080';
+  const API_BASE_URL = 'http://192.168.133.57:9080';
   const LOGIN_ENDPOINT = `${API_BASE_URL}/api/users/email`;
   const SIGNUP_ENDPOINT = `${API_BASE_URL}/api/users`;
 
