@@ -1,19 +1,16 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Linking } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Alert } from "react-native";
 import QRCodeStyled from 'react-native-qrcode-styled';
 
 const PaymentCompletionScreen = ({ route, navigation }) => {
-  // Get total from PaymentScreen and cart from CheckoutScreen via route params
-  const { totalAmount, cart } = route.params || { totalAmount: 0, cart: [] };
+  const { totalAmount = 0, cart = [] } = route.params || {};
   
-  // Get current date and time for receipt
   const currentDate = new Date();
   const formattedDate = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
-  
-  // Generate a random order ID
   const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  // Create detailed receipt string for QR code
+  console.log("PaymentCompletionScreen - totalAmount:", totalAmount, "cart:", cart);
+
   const itemsList = cart.map(item => `${item.name}: ₹${item.price} x ${item.quantity}`).join('\n');
   const receiptQRValue = `Order Receipt
 Order ID: ${orderId}
@@ -25,9 +22,11 @@ Status: Paid
 Thank you for your order!`;
 
   const openQRLink = () => {
-    // This will open the receipt data as plain text
-    Linking.openURL(`data:text/plain,${encodeURIComponent(receiptQRValue)}`).catch((err) => 
-      console.error('An error occurred', err)
+    Alert.alert(
+      "Order Receipt",
+      receiptQRValue,
+      [{ text: "OK", onPress: () => console.log("Receipt viewed") }],
+      { cancelable: true }
     );
   };
 
@@ -62,7 +61,6 @@ Thank you for your order!`;
             </View>
           </View>
 
-          {/* QR Code Display */}
           <View style={styles.qrContainer}>
             <Text style={styles.qrText}>Scan to view receipt</Text>
             <QRCodeStyled

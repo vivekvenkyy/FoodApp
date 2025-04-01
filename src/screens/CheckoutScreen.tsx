@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 
 const CheckoutScreen = ({ route, navigation }) => {
-  const { cart } = route.params; // Get cart items from navigation
+  const { cart } = route.params;
 
   const getTotalPrice = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -28,8 +28,9 @@ const CheckoutScreen = ({ route, navigation }) => {
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
-          console.log("Navigating to Payment screen with total:", getTotalPrice());
-          navigation.navigate("Payment", { total: getTotalPrice(), cart }); // Pass total and cart
+          const total = getTotalPrice();
+          console.log("Navigating to Payment screen with total:", total);
+          navigation.navigate("Payment", { total, cart });
         }}
       >
         <Text style={styles.confirmText}>Proceed to Payment</Text>
