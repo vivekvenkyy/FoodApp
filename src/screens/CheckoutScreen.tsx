@@ -5,8 +5,10 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // Assuming installed
+import { LinearGradient } from "expo-linear-gradient";
+import * as LocalAuthentication from "expo-local-authentication";
 
 const CheckoutScreen = ({ route, navigation }) => {
   const { cart } = route.params || {};
@@ -25,44 +27,72 @@ const CheckoutScreen = ({ route, navigation }) => {
     </View>
   );
 
+  const handleProceedToPayment = async () => {
+    // Debug navigation prop and current route
+    console.log("Navigation object:", navigation);
+    console.log("Current route:", navigation.getState()?.routes);
+
+    try {
+      if (!navigation || !navigation.navigate) {
+        Alert.alert("Navigation Error", "Navigation prop is missing or invalid.");
+        return;
+      }
+
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      if (!hasHardware) {
+        Alert.alert("Error", "Biometric authentication not available.");
+        return;
+      }
+
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!isEnrolled) {
+        Alert.alert("Error", "No biometric data enrolled.");
+        return;
+      }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate to proceed with payment",
+        fallbackLabel: "Use PIN",
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        const total = getTotalPrice();
+        console.log("Biometric authentication successful. Navigating to Payment screen with total:", total);
+        console.log("Attempting navigation to 'Payment' with params:", { total, cart });
+        navigation.navigate("Payment", { total, cart });
+        console.log("Navigation to Payment executed");
+      } else {
+        Alert.alert("Authentication Failed", "Biometric scan failed.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Authentication error: " + error.message);
+      console.error("Authentication error:", error);
+    }
+  };
+
   return (
     <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
-      {/* Header */}
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Checkout</Text>
       </View>
-
-      {/* Cart Items */}
       <FlatList
         data={cart}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.flatListContent}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Your cart is empty.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.emptyText}>Your cart is empty.</Text>}
       />
-
-      {/* Total */}
       <View style={styles.totalContainer}>
         <Text style={styles.totalLabel}>Total:</Text>
         <Text style={styles.total}>₹{getTotalPrice()}</Text>
       </View>
-
-      {/* Confirm Button */}
       <TouchableOpacity
         style={styles.confirmButton}
-        onPress={() => {
-          const total = getTotalPrice();
-          console.log("Navigating to Payment screen with total:", total);
-          navigation.navigate("Payment", { total, cart });
-        }}
+        onPress={handleProceedToPayment}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={["#ff6600", "#ff4500"]}
-          style={styles.gradientButton}
-        >
+        <LinearGradient colors={["#ff6600", "#ff4500"]} style={styles.gradientButton}>
           <Text style={styles.confirmText}>Proceed to Payment</Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -77,7 +107,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingVertical: 20,
-    paddingTop: 40, // Extra padding for status bar
+    paddingTop: 40,
     alignItems: "center",
     backgroundColor: "#fff",
     borderBottomLeftRadius: 20,

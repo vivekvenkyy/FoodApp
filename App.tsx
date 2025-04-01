@@ -9,7 +9,7 @@ import PaymentScreen from "./src/screens/PaymentScreen";
 import ConfirmationScreen from "./src/screens/ConfirmationScreen";
 import PaymentCompletionScreen from "./src/screens/PaymentCompletionScreen";
 import AuthScreen from "./src/screens/AuthScreen";
-import AdminDashboardScreen from "./src/screens/AdminDashboardScreen"; // Added
+import AdminDashboardScreen from "./src/screens/AdminDashboardScreen";
 import { CartProvider } from "./src/context/CartContext";
 
 const Stack = createNativeStackNavigator();

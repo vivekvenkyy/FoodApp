@@ -1,18 +1,13 @@
 import React, { useContext } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // Assuming installed
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { CartContext } from "../context/CartContext";
 
 const PaymentScreen = ({ route, navigation }) => {
+  // Get total and cart from route params, with fallback
   const { total = 0, cart = [] } = route.params || {};
   const { getTotalPrice } = useContext(CartContext);
 
+  // Use total from route.params instead of CartContext to ensure consistency
   const totalAmount = total;
 
   console.log("PaymentScreen - total from Checkout:", total, "cart:", cart);
@@ -23,17 +18,13 @@ const PaymentScreen = ({ route, navigation }) => {
   };
 
   return (
-    <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>Amount Payable: ₹{totalAmount}</Text>
-      </View>
-
-      {/* QR Code Section */}
+    <View style={styles.container}>
+      <Text style={styles.title}>Amount Payable: ₹{totalAmount}</Text>
+      
       <View style={styles.qrContainer}>
-        <Text style={styles.qrText}>Scan to Pay</Text>
-        <Image
-          source={require("../../qr-payment.jpg")}
+        <Text style={styles.qrText}>Scan to pay</Text>
+        <Image 
+          source={require('../../qr-payment.jpg')} 
           style={styles.qrImage}
           resizeMode="contain"
         />
@@ -41,122 +32,73 @@ const PaymentScreen = ({ route, navigation }) => {
           Scan this QR code with your payment app
         </Text>
       </View>
+      
+      <Text style={styles.orText}>OR</Text>
 
-      {/* OR Divider */}
-      <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.orText}>OR</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      {/* Pay Button */}
-      <TouchableOpacity
-        style={styles.payButton}
-        onPress={handlePayment}
-        activeOpacity={0.8}
-      >
-        <LinearGradient
-          colors={["#ff6600", "#ff4500"]}
-          style={styles.gradientButton}
-        >
-          <Text style={styles.payText}>Confirm Payment</Text>
-        </LinearGradient>
+      <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
+        <Text style={styles.payText}>Confirm Payment</Text>
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    padding: 16 
   },
-  headerContainer: {
-    paddingVertical: 20,
-    paddingTop: 40, // Extra padding for status bar
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#ff6600",
-    letterSpacing: 1,
+  title: { 
+    fontSize: 24, 
+    fontWeight: "bold", 
+    marginBottom: 20 
   },
   qrContainer: {
     alignItems: "center",
-    marginBottom: 30,
-    padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "rgba(255, 102, 0, 0.2)",
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: "white",
+    borderRadius: 10,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   qrText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 15,
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+    color: "#555"
   },
   qrImage: {
-    width: 220,
-    height: 220,
+    width: 200,
+    height: 200,
     marginVertical: 10,
   },
   qrCaption: {
-    fontSize: 16,
-    color: "#777",
+    fontSize: 14,
+    color: "#666",
     textAlign: "center",
-    marginTop: 15,
-    fontStyle: "italic",
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#ccc",
+    marginTop: 10,
   },
   orText: {
-    marginHorizontal: 15,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#ff6600",
+    margin: 20,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#666"
   },
-  payButton: {
-    borderRadius: 25,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  gradientButton: {
-    paddingVertical: 18,
+  payButton: { 
+    backgroundColor: "#4CAF50", 
+    padding: 15, 
     paddingHorizontal: 40,
-    alignItems: "center",
+    borderRadius: 8 
   },
-  payText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 20,
+  payText: { 
+    color: "white", 
+    fontWeight: "bold", 
+    fontSize: 18 
   },
 });
 
