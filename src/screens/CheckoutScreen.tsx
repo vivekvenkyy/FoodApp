@@ -1,30 +1,55 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient"; // Assuming installed
 
 const CheckoutScreen = ({ route, navigation }) => {
-  const { cart } = route.params;
+  const { cart } = route.params || {};
 
   const getTotalPrice = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
+  const renderItem = ({ item }) => (
+    <View style={styles.cartItem}>
+      <Text style={styles.itemName}>{item.name}</Text>
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemQuantity}>x {item.quantity}</Text>
+        <Text style={styles.itemPrice}>₹{item.price * item.quantity}</Text>
+      </View>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Checkout</Text>
-      
+    <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Checkout</Text>
+      </View>
+
+      {/* Cart Items */}
       <FlatList
         data={cart}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.cartItem}>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemPrice}>₹{item.price} x {item.quantity}</Text>
-          </View>
-        )}
+        renderItem={renderItem}
+        contentContainerStyle={styles.flatListContent}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Your cart is empty.</Text>
+        }
       />
 
-      <Text style={styles.total}>Total: ₹{getTotalPrice()}</Text>
+      {/* Total */}
+      <View style={styles.totalContainer}>
+        <Text style={styles.totalLabel}>Total:</Text>
+        <Text style={styles.total}>₹{getTotalPrice()}</Text>
+      </View>
 
+      {/* Confirm Button */}
       <TouchableOpacity
         style={styles.confirmButton}
         onPress={() => {
@@ -32,58 +57,130 @@ const CheckoutScreen = ({ route, navigation }) => {
           console.log("Navigating to Payment screen with total:", total);
           navigation.navigate("Payment", { total, cart });
         }}
+        activeOpacity={0.8}
       >
-        <Text style={styles.confirmText}>Proceed to Payment</Text>
+        <LinearGradient
+          colors={["#ff6600", "#ff4500"]}
+          style={styles.gradientButton}
+        >
+          <Text style={styles.confirmText}>Proceed to Payment</Text>
+        </LinearGradient>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
-    padding: 16,
+    paddingHorizontal: 20,
+  },
+  headerContainer: {
+    paddingVertical: 20,
+    paddingTop: 40, // Extra padding for status bar
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    marginBottom: 20,
   },
   header: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#ff6600",
+    letterSpacing: 1,
+  },
+  flatListContent: {
+    paddingBottom: 20,
   },
   cartItem: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 6,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   itemName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+  },
+  itemDetails: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  itemQuantity: {
     fontSize: 16,
+    color: "#777",
+    marginRight: 10,
   },
   itemPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "700",
     color: "#ff6600",
   },
-  total: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "right",
-    marginTop: 10,
-  },
-  confirmButton: {
-    backgroundColor: "#28a745",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
     marginTop: 20,
   },
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 12,
+    marginVertical: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  totalLabel: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+  },
+  total: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#ff6600",
+  },
+  confirmButton: {
+    borderRadius: 25,
+    overflow: "hidden",
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  gradientButton: {
+    paddingVertical: 18,
+    paddingHorizontal: 30,
+    alignItems: "center",
+  },
   confirmText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
   },
 });
 
