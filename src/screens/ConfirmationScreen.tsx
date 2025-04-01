@@ -5,9 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Alert,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // Assuming installed
+import { LinearGradient } from "expo-linear-gradient";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import * as Location from "expo-location"; // Import expo-location
 
 const ConfirmationScreen = ({ navigation }) => {
   const deliveryLocation = {
@@ -15,31 +17,79 @@ const ConfirmationScreen = ({ navigation }) => {
     longitude: 72.9000,
   };
 
-  const [riderLocation, setRiderLocation] = useState({
-    latitude: 19.0510, // Starting location (near Chembur)
-    longitude: 72.8930,
-  });
+  const [riderLocation, setRiderLocation] = useState(null); // Start with null until GPS data is available
+  const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRiderLocation((prevLocation) => {
-        const latDiff = deliveryLocation.latitude - prevLocation.latitude;
-        const lonDiff = deliveryLocation.longitude - prevLocation.longitude;
+    let subscription;
 
-        if (Math.abs(latDiff) < 0.0005 && Math.abs(lonDiff) < 0.0005) {
-          clearInterval(interval);
-          return prevLocation;
+    const setupLocationTracking = async () => {
+      // Request foreground location permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setLocationError("Location permission denied. Cannot track rider.");
+        Alert.alert("Permission Denied", "Please enable location services to track the rider.");
+        return;
+      }
+
+      // Start watching the rider's location
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High, // High accuracy for GPS
+          timeInterval: 1000, // Update every 1 second
+          distanceInterval: 1, // Update every 1 meter moved
+        },
+        (location) => {
+          setRiderLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+          setLocationError(null); // Clear any previous error
         }
+      );
+    };
 
-        return {
-          latitude: prevLocation.latitude + latDiff * 0.02,
-          longitude: prevLocation.longitude + lonDiff * 0.02,
-        };
-      });
-    }, 1000);
+    setupLocationTracking();
 
-    return () => clearInterval(interval);
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
   }, []);
+
+  // Show loading or error state if rider location isn't available yet
+  if (locationError) {
+    return (
+      <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.success}>🎉 Order Placed Successfully! 🎉</Text>
+        </View>
+        <Text style={styles.errorText}>{locationError}</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("Home")}
+          activeOpacity={0.8}
+        >
+          <LinearGradient colors={["#ff6600", "#ff4500"]} style={styles.gradientButton}>
+            <Text style={styles.buttonText}>Back to Home</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </LinearGradient>
+    );
+  }
+
+  if (!riderLocation) {
+    return (
+      <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.success}>🎉 Order Placed Successfully! 🎉</Text>
+        </View>
+        <Text style={styles.statusText}>Fetching rider location...</Text>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
@@ -53,7 +103,7 @@ const ConfirmationScreen = ({ navigation }) => {
         <MapView
           style={styles.map}
           region={{
-            latitude: (deliveryLocation.latitude + riderLocation.latitude) / 2, // Center between rider and delivery
+            latitude: (deliveryLocation.latitude + riderLocation.latitude) / 2,
             longitude: (deliveryLocation.longitude + riderLocation.longitude) / 2,
             latitudeDelta: 0.025,
             longitudeDelta: 0.025,
@@ -73,7 +123,7 @@ const ConfirmationScreen = ({ navigation }) => {
           />
           <Polyline
             coordinates={[riderLocation, deliveryLocation]}
-            strokeColor="#ff6600" // Changed to match theme
+            strokeColor="#ff6600"
             strokeWidth={3}
           />
         </MapView>
@@ -108,7 +158,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingVertical: 20,
-    paddingTop: 40, // Extra padding for status bar
+    paddingTop: 40,
     alignItems: "center",
     backgroundColor: "#fff",
     borderBottomLeftRadius: 20,
@@ -150,6 +200,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     lineHeight: 22,
     fontStyle: "italic",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#ff4500",
+    textAlign: "center",
+    marginVertical: 20,
   },
   button: {
     borderRadius: 25,

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // Use Expo's LinearGradient
 import Icon from "react-native-vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const categories = [
   { id: "1", name: "All", icon: "grid-outline" },
@@ -78,6 +79,7 @@ const restaurantData = [
     ],
   },
 ];
+
 const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -88,11 +90,39 @@ const HomeScreen = ({ navigation }) => {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleLogout = async () => {
+    try {
+      // Clear user data from AsyncStorage
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("userData");
+      // Reset navigation to AuthScreen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Auth" }],
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   return (
     <LinearGradient colors={["#ffede6", "#f8f8f8"]} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Food Delivery</Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={["#ff6600", "#ff4500"]}
+            style={styles.logoutGradient}
+          >
+            <Icon name="log-out-outline" size={20} color="#fff" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -175,6 +205,8 @@ const styles = StyleSheet.create({
   header: {
     paddingVertical: 20,
     paddingTop: 40, // Extra padding for status bar
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   headerTitle: {
@@ -182,6 +214,27 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#ff6600",
     letterSpacing: 1,
+  },
+  logoutButton: {
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  logoutGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 8,
   },
   searchContainer: {
     flexDirection: "row",
